@@ -1,0 +1,3 @@
+aiohttp
+aioauth_client
+nose
