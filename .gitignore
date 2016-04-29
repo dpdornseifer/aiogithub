@@ -87,6 +87,12 @@ lib/
 # Mongo Explorer plugin:
 .idea/mongoSettings.xml
 
+# Pychamrm .idea folder
+.idea/
+
+# Nosetest man folder
+/man/
+
 ## File-based project format:
 *.iws
 
