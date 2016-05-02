@@ -3,16 +3,17 @@ import abc
 #from .utils import GithubClient
 
 class GitHubArtifact:
+    """ Base clase for all objects on GitHub """
 
-    def __init__(self, ghurl, prio):
+    def __init__(self, ghurl=None, prio=None):
         # the specific Rest endpoint for the artifact
-        self._ghurl = ''
+        self._ghurl = ghurl
 
         # objects with a lower prio are executed first e.g. the repository before a label
-        self._prio = None
+        self._prio = prio
 
         # keep all the necessary values
-        self.payload = None
+        self._payload = {}
 
     @property
     def ghurl(self):
@@ -24,11 +25,19 @@ class GitHubArtifact:
 
     @property
     def prio(self):
-        return(self._prio)
+        return self._prio
 
     @prio.setter
     def prio(self, prio):
         self._prio = prio
+
+    @property
+    def payload(self):
+        return self._payload
+
+    @payload.setter
+    def payload(self, payload):
+        self._payload.update(payload)
 
 
     def getjsonpayload(self):
@@ -43,17 +52,17 @@ class GitHubArtifact:
 
 
 class GitHubRepository(GitHubArtifact):
+    """ Class represents a repository on the GitHub platform """
 
     def __init__(self, name, description, private='false', org=None):
-
+        super(GitHubRepository, self).__init__()
         # distinguish between a user and a org repo
         url = 'user/repos' if org is None else 'orgs/{}/repos'.format(org)
-
         self.ghurl = url
         self.prio = 1
 
-        self.payload = dict(name=name, description=description, private=private, homepage='None', has_issues='true',
-                            has_wiki='true', has_downloads='true', auto_init='false', licence_template='None')
+        self.payload = {'name': name, 'description': description, 'private': private, 'homepage': '', 'has_issues':'true',
+                            'has_wiki': 'true', 'has_downloads': 'true', 'auto_init': 'false', 'licence_template': ''}
 
         self.files = {}
         self.labels = []
@@ -96,12 +105,25 @@ class GitHubRepository(GitHubArtifact):
     }
     """
 
+
 class GitHubFile(GitHubArtifact):
-    def __init__(self):
+    def apply(self):
         pass
 
+    def __init__(self, name, repo_owner, repo_name, content, path):
+        super(GitHubFile, self).__init__()
+        # file url
+        url = 'repos/{}/{}/git/blobs'.format(repo_owner, repo_name)
 
-class GitHubLabel:
+        self.ghurl = url
+        self.prio = 1
+
+        self.payload = {name: {'Content': content, 'Path': path}}
+
+
+
+class GitHubLabel(GitHubArtifact):
+
 
     """
     payload = {"repo_owner": "",
@@ -119,8 +141,16 @@ class GitHubLabel:
                }
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, repo_owner, repo_name, name, color):
+        super(GitHubLabel, self).__init__()
+        # label url
+        url = 'repos/{}/{}/labels'.format(repo_owner, repo_name)
+
+        self.ghurl = url
+        self.prio = 2
+
+        self.payload = {"name": name, "color": color}
+
 
 
 class GitHubIssue:
