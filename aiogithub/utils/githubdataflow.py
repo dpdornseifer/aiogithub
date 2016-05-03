@@ -27,32 +27,22 @@ class RepositoryFlow(GitHubFlow):
         return repositoryflow_json
 
 
-
 class FileFlow(GitHubFlow):
-
-    def __init__(self, files):
-        pass
 
     @staticmethod
     def executeflow(self, *args, **kwargs):
         pass
-
-
-
-
 
 
 class LabelFlow(GitHubFlow):
-    def __init__(self):
-        pass
 
     @staticmethod
     def executeflow(self, *args, **kwargs):
         pass
-
 
 
 class TeamFlow(GitHubFlow):
 
-    def __init__(self):
+    @staticmethod
+    def executeflow(self, *args, **kwargs):
         pass
