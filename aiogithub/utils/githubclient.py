@@ -1,18 +1,24 @@
 import asyncio
 from urllib.parse import urljoin
 from aioauth_client import OAuth2Client
-from aiohttp import ClientRequest, BasicAuth
+from aiohttp import ClientSession, request, BasicAuth
+
 
 class GitHubClient(object):
     ''' Client implementation using http basic auth '''
 
-    def __init__(self, host, user, password):
+    def __init__(self, host, user, password, type='public'):
         super(GitHubClient, self).__init__()
-        self._base_url = 'https://{}/api/v3/'.format(host)
+
+        # url switch for public and enterprise GitHub instances
+        if type == 'private':
+            self._base_url = 'https://{}/api/v3/'.format(host)
+        else:
+            self._base_url = 'https://{}/'.format(host)
+
         self._user = user
         self._password = password
         self._auth = BasicAuth(user, password)
-
 
     @property
     def base_url(self):
@@ -35,7 +41,8 @@ class GitHubClient(object):
 
     def request(self, method, url, params=None,  timeout=10, headers=None, **aio_kwargs):
         return asyncio.wait_for(
-            ClientRequest(method, self._get_rest_enpoint(url), params=params, headers=headers, auth=self._auth, **aio_kwargs),
+            request(method=method, url=self.get_rest_endpoint(url), params=params, headers=headers,
+                    auth=self.auth, **aio_kwargs),
             timeout)
 
 

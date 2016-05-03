@@ -1,16 +1,29 @@
 import logging
 import json
+from .exceptions import GitHubRequestException
+
 
 logger = logging.getLogger('root')
 
-async def postrequest(ghclient, repo_url, payload):
+async def ghrequest(ghclient, method, repo_url, payload):
     ''' do a simple post request '''
+    try:
+        response = await ghclient.request(method=method, url=repo_url, data=payload)
+        if response.status == 200:
+            ghrequest_jsonresponse = await response.json()
+        else:
+            ghrequest_jsonresponse = 'An error occurred'
 
-    response = await ghclient.request('POST', repo_url, data=payload)
-    postrequest_jsonresponse = await response.json()
+    except TimeoutError as te:
+        logger.error(" An TimeoutError occurred while processing a {} request: {}".format(method, te))
+        raise GitHubRequestException(te)
 
-    logger.info(" The POST request response looks like: {!s}".format(postrequest_jsonresponse))
-    return postrequest_jsonresponse
+    except Exception as e:
+        logger.error(" An exception occurred while processing a {} request: {}".format(method, e))
+        raise GitHubRequestException(e)
+
+    logger.info(" The POST request response looks like: {}".format(ghrequest_jsonresponse))
+    return ghrequest_jsonresponse
 
 
 async def gethead(ghclient, repo_owner, repo_name):
@@ -20,7 +33,7 @@ async def gethead(ghclient, repo_owner, repo_name):
     head_response = await ghclient.request('GET', head_url)
     head_jsonresponse = await head_response.json()
 
-    logger.info(" The Head ref for the rew repo is: {!r}".format(head_jsonresponse))
+    logger.info(" The Head ref for the rew repo is: {}".format(head_jsonresponse))
     return head_jsonresponse
 
 
@@ -31,7 +44,7 @@ async def getcommitobject(ghclient, head_jsonresponse):
     commitobject_response = await ghclient.request('GET', commitobject_url)
     commitobject_jsonresponse = await commitobject_response.json()
 
-    logger.info(" The commit object for the new repo is: {!r}".format(commitobject_jsonresponse))
+    logger.info(" The commit object for the new repo is: {}".format(commitobject_jsonresponse))
     return commitobject_jsonresponse
 
 

@@ -1,16 +1,19 @@
 import json
-import abc
-#from .utils import GithubClient
+from aiogithub.utils import githubdataflow
+
 
 class GitHubArtifact:
-    """ Base clase for all objects on GitHub """
+    ''' Base clase for all objects on GitHub '''
 
-    def __init__(self, ghurl=None, prio=None):
+    def __init__(self, ghurl=None, prio=None, flow=None):
         # the specific Rest endpoint for the artifact
         self._ghurl = ghurl
 
         # objects with a lower prio are executed first e.g. the repository before a label
         self._prio = prio
+
+        # assigned flow for the specific object.
+        self._flow = flow
 
         # keep all the necessary values
         self._payload = {}
@@ -32,6 +35,14 @@ class GitHubArtifact:
         self._prio = prio
 
     @property
+    def flow(self):
+        return self._flow
+
+    @flow.setter
+    def flow(self, flow):
+        self._flow = flow
+
+    @property
     def payload(self):
         return self._payload
 
@@ -39,37 +50,24 @@ class GitHubArtifact:
     def payload(self, payload):
         self._payload.update(payload)
 
-
     def getjsonpayload(self):
-        """ Returns the json representation of the payload of all non private values """
+        ''' Returns the json representation of the payload of all non private values '''
         return json.dumps(self.payload)
 
 
-    @abc.abstractmethod
-    def apply(self):
-        """ individual implementation of apply method """
-
-
-
 class GitHubRepository(GitHubArtifact):
-    """ Class represents a repository on the GitHub platform """
+    ''' Class represents a repository on the GitHub platform '''
 
-    def __init__(self, name, description, private='false', org=None):
-        super(GitHubRepository, self).__init__()
+    def __init__(self, name, description, private=False, org=None):
+        super(GitHubRepository, self).__init__(prio=1, flow=githubdataflow.RepositoryFlow)
         # distinguish between a user and a org repo
         url = 'user/repos' if org is None else 'orgs/{}/repos'.format(org)
         self.ghurl = url
-        self.prio = 1
-
-        self.payload = {'name': name, 'description': description, 'private': private, 'homepage': '', 'has_issues':'true',
-                            'has_wiki': 'true', 'has_downloads': 'true', 'auto_init': 'false', 'licence_template': ''}
-
-        self.files = {}
-        self.labels = []
 
 
-    def apply(self, githubclient):
-        """ """
+        self.payload = {'name': name, 'description': description, 'private': private, 'homepage': '', 'has_issues':True,
+                            'has_wiki': True, 'has_downloads': True, 'auto_init': False, 'licence_template': ''}
+
 
 
     """
@@ -107,24 +105,20 @@ class GitHubRepository(GitHubArtifact):
 
 
 class GitHubFile(GitHubArtifact):
-    def apply(self):
-        pass
-
+    ''' Representing a single file object on the GitHub platform'''
     def __init__(self, name, repo_owner, repo_name, content, path):
         super(GitHubFile, self).__init__()
         # file url
         url = 'repos/{}/{}/git/blobs'.format(repo_owner, repo_name)
 
         self.ghurl = url
-        self.prio = 1
+        self.prio = 2
 
         self.payload = {name: {'Content': content, 'Path': path}}
 
 
-
 class GitHubLabel(GitHubArtifact):
-
-
+    ''' Representing a label object which is assigned to issues on the GitHub platform '''
     """
     payload = {"repo_owner": "",
                "repo_name": "",
@@ -140,7 +134,6 @@ class GitHubLabel(GitHubArtifact):
                ]
                }
     """
-
     def __init__(self, repo_owner, repo_name, name, color):
         super(GitHubLabel, self).__init__()
         # label url
@@ -153,7 +146,7 @@ class GitHubLabel(GitHubArtifact):
 
 
 
-class GitHubIssue:
+class GitHubIssue(GitHubArtifact):
 
     def __init__(self):
         pass
