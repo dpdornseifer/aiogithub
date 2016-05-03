@@ -2,7 +2,7 @@ import unittest
 import asyncio
 from aiohttp.web import Request
 from aiogithub import AioGitHub
-
+from aiogithub import githubartifacts
 
 class AioGitHubTest(unittest.TestCase):
 
@@ -25,8 +25,8 @@ class AioGitHubTest(unittest.TestCase):
         self.assertEqual(self.aiogithub.githubclient, 'github_client_object')
 
     def test_set_payload(self):
-        self.aiogithub.payload = {"repo_name": "bug"}
-        self.assertEqual(self.aiogithub.payload, {"repo_name": "bug"})
+        self.aiogithub.ghartifacts = {"repo_name": "bug"}
+        self.assertEqual(self.aiogithub.ghartifacts, {"repo_name": "bug"})
 
     def test_set_repoowner(self):
         self.aiogithub.repoowner = 'githubusername'
@@ -36,6 +36,33 @@ class AioGitHubTest(unittest.TestCase):
         self.aiogithub.reponame = 'reponame'
         self.assertEqual(self.aiogithub.reponame, 'reponame')
 
+    def test_add_github_artifact(self):
+        self.githubrepository = githubartifacts.GitHubRepository('test_repository', 'my repo')
+        self.githubfile = githubartifacts.GitHubFile('Readme.md', 'test_user', 'test_repository', '#My File \n', '')
+        self.aiogithub.ghartifacts = [self.githubrepository, self.githubfile]
+        self.assertEqual(self.aiogithub.ghartifacts, [self.githubrepository, self.githubfile])
+
+    def test_check_if_github_artifacts_are_valid(self):
+        self.githubrepository = githubartifacts.GitHubRepository('test_repository', 'my repo')
+        self.githubfile = githubartifacts.GitHubFile('Readme.md', 'test_user', 'test_repository', '#My File \n', '')
+        self.aiogithub.ghartifacts = [self.githubrepository, self.githubfile]
+        self.assertTrue(self.aiogithub.artifactsvalid())
+        self.aiogithub.addghartifact('my string artifact')
+        self.assertFalse(self.aiogithub.artifactsvalid())
+
+    def test_get_priority_dict(self):
+        self.githubrepository = githubartifacts.GitHubRepository('test_repository', 'my repo')
+        self.githubfile = githubartifacts.GitHubFile('Readme.md', 'test_user', 'test_repository', '#My File \n', '')
+        self.aiogithub.ghartifacts = [self.githubrepository, self.githubfile]
+        priority_dict = {1: [self.githubrepository], 2: [self.githubfile]}
+        self.assertDictEqual(self.aiogithub.get_priority_dict(), priority_dict)
+
+    def test_get_task_list(self):
+        self.githubrepository = githubartifacts.GitHubRepository('test_repository', 'my repo')
+        self.githubfile = githubartifacts.GitHubFile('Readme.md', 'test_user', 'test_repository', '#My File \n', '')
+        self.aiogithub.ghartifacts = [self.githubrepository, self.githubfile]
+        priority_dict = {1: [self.githubrepository], 2: [self.githubfile]}
+        self.assertTrue(asyncio.iscoroutine(self.aiogithub.get_tasks(priority_dict[1])[0]))
 
 
 

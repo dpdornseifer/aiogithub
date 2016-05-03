@@ -16,7 +16,8 @@ class GitHubClientTest(unittest.TestCase):
         host = 'github.com'
         username = 'testuser'
         password = 'mypassword'
-        self.githubclient = githubclient.GitHubClient(host, username, password)
+        type = 'private'
+        self.githubclient = githubclient.GitHubClient(host, username, password, 'private')
 
         self.assertEqual(self.githubclient.base_url, 'https://github.com/api/v3/')
         self.assertEqual(self.githubclient.username, 'testuser')
@@ -24,14 +25,24 @@ class GitHubClientTest(unittest.TestCase):
         self.assertEqual(self.githubclient.auth, BasicAuth('testuser', 'mypassword'))
 
     def test_github_client_build_url(self):
-        host = 'github.com'
+        host = 'githubenterprise.com'
         username = 'testuser'
         password = 'mypassword'
-        self.githubclient = githubclient.GitHubClient(host, username, password)
-
+        type = 'private'
+        self.githubclient = githubclient.GitHubClient(host, username, password, type)
 
         self.assertEqual(self.githubclient.get_rest_endpoint('user'),
-                         'https://github.com/api/v3/user')
+                         'https://githubenterprise.com/api/v3/user')
+
+    def test_github_client_url_switch(self):
+        host = 'api.github.com'
+        username = 'testuser'
+        password = 'mypassword'
+
+        self.githubclient = githubclient.GitHubClient(host, username, password)
+
+        self.assertEqual(self.githubclient.get_rest_endpoint('user'),
+                     'https://api.github.com/user')
 
     def test_github_client_requerst(self):
         # TODO implmente async test for request function - request also already tested in aiohttp
